@@ -8,7 +8,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.height_converter.ui.theme.Height_converterTheme
 
@@ -28,13 +27,33 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HeightConverterApp() {
-    var heightCm by remember { mutableStateOf("") }
-    var resultMeters by remember { mutableStateOf("") }
-    var resultFeetInches by remember { mutableStateOf("") }
+    var height by remember { mutableStateOf("") }
+    var unit by remember { mutableStateOf("CM") }
+    var result by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
+
+    fun calculateResult() {
+        val value = height.toDoubleOrNull()
+        if (value != null) {
+            result = if (unit == "CM") {
+                val totalInches = value / 2.54
+                val feet = totalInches / 12
+                val inches = totalInches % 12
+                "${feet.toInt()} pés ${inches.toInt()} pol"
+            } else {
+                val feetInches = value * 30.48
+                "${String.format("%.2f", feetInches)} cm"
+            }
+        } else {
+            result = ""
+        }
+    }
 
     Scaffold(
         topBar = {
-            Surface(shadowElevation = 10.dp) {
+            Surface(
+                shadowElevation = 10.dp,
+            ) {
                 TopAppBar(
                     title = {
                         Text(
@@ -56,47 +75,81 @@ fun HeightConverterApp() {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             OutlinedTextField(
-                value = heightCm,
+                value = height,
                 onValueChange = {
-                    heightCm = it.filter { c -> c.isDigit() }
+                    height = it.filter { c -> c.isDigit() || c == '.' }
+                    calculateResult()
                 },
                 label = {
                     Text(
-                        "Altura em cm",
+                        "Altura em ${if (unit == "CM") "CM" else "Feet/Inches"}",
                     )
                 },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
-
-            Button(onClick = {
-                val cm = heightCm.toDoubleOrNull()
-                if (cm != null) {
-                    resultMeters = "${cm / 100} m"
-                    val feet = cm / 30.48
-                    val inches = (feet - feet.toInt()) * 12
-                    resultFeetInches = "${feet.toInt()} pés ${inches.toInt()} pol"
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded },
+            ) {
+                OutlinedTextField(
+                    value = unit,
+                    onValueChange = {},
+                    readOnly = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    label = {
+                        Text(
+                            "Unidade",
+                        )
+                    },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(
+                            expanded = expanded,
+                        )
+                    },
+                )
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                ) {
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                "CM",
+                            )
+                        },
+                        onClick = {
+                            if (unit != "CM" && height.isNotEmpty()) {
+                                height = String.format("%.2f", height.toDouble() * 30.48)
+                            }
+                            unit = "CM"
+                            expanded = false
+                            calculateResult()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                "Feet/Inches",
+                            )
+                        },
+                        onClick = {
+                            if (unit != "Feet/Inches" && height.isNotEmpty()) {
+                                height = String.format("%.2f", height.toDouble() / 30.48)
+                            }
+                            unit = "Feet/Inches"
+                            expanded = false
+                            calculateResult()
+                        },
+                    )
                 }
-            }, modifier = Modifier.fillMaxWidth()) {
-                Text("Converter")
             }
 
-            if (resultMeters.isNotEmpty()) {
-                Text(
-                    "Em metros: $resultMeters",
-                )
-                Text(
-                    "Em pés/polegadas: $resultFeetInches",
-                )
-            }
+            Text(
+                "Convertido: ${if (result.toString().isNotEmpty()) result else ""} ",
+            )
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    Height_converterTheme {
-        HeightConverterApp()
     }
 }

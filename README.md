@@ -8,8 +8,8 @@ This is a documentation of the **height_converter** project, which includes a mo
 
 ## Project Statistics
 
-- **Lines of code**: 206
+- **Lines of code**: 258
 - **Files**: 4
 - **Folders**: 2
 - **Screens**: 1
-- **Average lines per file**: 52
+- **Average lines per file**: 65
